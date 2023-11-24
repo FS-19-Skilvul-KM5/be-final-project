@@ -1,0 +1,6 @@
+# Modul Node.js
+node_modules/
+src/
+
+# Berkas konfigurasi
+.env
