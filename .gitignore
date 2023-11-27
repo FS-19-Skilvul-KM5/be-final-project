@@ -4,3 +4,37 @@ node_modules/
 
 # Berkas konfigurasi
 .env
+
+# Berkas log
+logs/
+*.log
+
+# Berkas sementara
+*.tmp
+
+# Berkas yang dihasilkan oleh pengguna
+*.pid
+*.seed
+*.pid.lock
+
+# Berkas konfigurasi OS atau editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Berkas konfigurasi sistem
+.DS_Store?
+Desktop.ini
+ehthumbs.db
+Icon?
+$RECYCLE.BIN/
+
+# Berkas konfigurasi text editor
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs_analysis.dat
+*.njsproj
+*.sln
+*.sw?
