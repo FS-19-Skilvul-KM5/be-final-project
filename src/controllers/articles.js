@@ -161,10 +161,9 @@ const deleteArticle = async (req, res) => {
 const updateArticle = async (req, res) => {
   try {
     const { title } = req.body;
-
     const articleId = req.params.id;
-
     const existingArticle = await Article.findById(articleId);
+    const newArticle = req.file;
 
     if (!existingArticle) {
       return res.status(404).json({ error: "Article not found" });
@@ -172,59 +171,31 @@ const updateArticle = async (req, res) => {
 
     existingArticle.title = title || existingArticle.title;
 
-    const newImage = req.files[0];
-    const newArticleFile = req.files[1];
-
-    if (newImage) {
-      const deleteArticleImage = await supabase.storage
-        .from("storage")
-        .remove([`${existingArticle.image.path}`]);
-
-      if (deleteArticleImage.error) {
-        return res.status(500).json({ error: "Error deleting workshop file" });
-      }
-
-      const { data, error } = await supabase.storage
-        .from("storage")
-        .upload(`image/${uuidv4()}-${newImage.originalname}`, newImage.buffer, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: newImage.mimetype,
-        });
-
-      const urlImage = supabase.storage.from("storage").getPublicUrl(data.path);
-
-      existingArticle.image = {
-        url: urlImage.data.publicUrl,
-        path: data.path,
-      };
-    }
-
-    if (newArticleFile) {
-      const deleteArticle = await supabase.storage
+    if (newArticle) {
+      const { error } = await supabase.storage
         .from("storage")
         .remove([`${existingArticle.content.path}`]);
 
-      if (deleteArticle.error) {
+      if (error) {
         return res.status(500).json({ error: "Error deleting workshop file" });
       }
 
-      const { data, error } = await supabase.storage
+      const { data } = await supabase.storage
         .from("storage")
         .upload(
-          `article/${uuidv4()}-${slugify(newArticleFile.originalname)}`,
-          newArticleFile.buffer,
+          `article/${uuidv4()}-${newArticle.originalname}`,
+          newArticle.buffer,
           {
-            contentType: newArticleFile.mimetype,
+            cacheControl: "3600",
+            upsert: false,
+            contentType: newArticle.mimetype,
           }
         );
 
-      const urlArticle = supabase.storage
-        .from("storage")
-        .getPublicUrl(data.path);
+      const urlImage = supabase.storage.from("storage").getPublicUrl(data.path);
 
       existingArticle.content = {
-        url: urlArticle.data.publicUrl,
+        url: urlImage.data.publicUrl,
         path: data.path,
       };
     }
@@ -239,6 +210,7 @@ const updateArticle = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 const searchArticle = async (req, res) => {
   const { q } = req.query;
   try {
