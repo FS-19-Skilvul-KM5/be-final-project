@@ -13,10 +13,14 @@ const {
   getAllEducation,
   getAllEducationByUser,
   searchEducation,
+  getEducationRecommendations,
 } = require("../controllers/educations");
 const validateToken = require("../middleware/validateTokenHandler");
 
-router.get("/", validateToken, getAllEducationByUser);
+router.get("/:educationId/recommendations", getEducationRecommendations);
+router.get("/", getAllEducation);
+
+router.get("/user", validateToken, getAllEducationByUser);
 router.post("/", validateToken, upload.single("files"), createEducation);
 router.put("/:id", validateToken, upload.single("files"), updateEducation);
 

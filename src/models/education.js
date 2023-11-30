@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const mongoosePaginate = require("mongoose-paginate-v2");
 
 const EducationSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -27,6 +28,7 @@ const EducationSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+EducationSchema.plugin(mongoosePaginate);
 
 const Education = mongoose.model("Education", EducationSchema);
 

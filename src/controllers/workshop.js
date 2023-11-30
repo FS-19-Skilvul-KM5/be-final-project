@@ -23,14 +23,16 @@ const getAllWorkshop = async (req, res) => {
       .exec();
 
     const paidWorkshops = workshops
-      .filter((workshop) => workshop.price != "0")
+      .filter((workshop) => workshop.price !== "0")
+      .slice(0, 8)
       .map((workshop) => ({
         workshop,
         recommendation: "Paid Workshop",
       }));
 
     const freeWorkshops = workshops
-      .filter((workshop) => workshop.price == "0")
+      .filter((workshop) => workshop.price === "0")
+      .slice(0, 8)
       .map((workshop) => ({
         workshop,
         recommendation: "Free Workshop",

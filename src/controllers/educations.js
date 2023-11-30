@@ -4,6 +4,59 @@ const { default: mongoose } = require("mongoose");
 const supabase = require("../../config/storageConnection");
 const { v4: uuidv4 } = require("uuid");
 
+const getAllEducation = async (req, res) => {
+  try {
+    const { page = 1, limit = 12 } = req.query;
+
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      sort: { publication_date: -1 },
+    };
+
+    const educations = await Education.paginate({}, options);
+
+    res.status(200).json(educations);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getRelatedEducations = async (educationId, limit = 8) => {
+  try {
+    const education = await Education.findById(educationId);
+    if (!education) {
+      throw new Error("Education not found");
+    }
+
+    const relatedEducations = await Education.find({
+      _id: { $ne: educationId },
+    })
+      .limit(limit)
+      .sort({ publication_date: -1 });
+
+    console.log(relatedEducations);
+    return relatedEducations;
+  } catch (error) {
+    console.error("Error fetching related educations:", error);
+    throw error;
+  }
+};
+
+const getEducationRecommendations = async (req, res) => {
+  try {
+    const { educationId } = req.params;
+
+    const relatedEducations = await getRelatedEducations(educationId);
+
+    res.status(200).json(relatedEducations);
+  } catch (error) {
+    console.error("Error generating education recommendations:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 const getAllEducationByUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("educations");
@@ -25,18 +78,6 @@ const searchEducation = async (req, res) => {
     }).limit(4);
 
     res.json(education);
-  } catch (error) {
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-const getAllEducation = async (req, res, latest = true) => {
-  try {
-    const educations = await Education.find()
-      .sort({ publication_date: -1 })
-      .exec();
-
-    res.status(200).json(educations);
   } catch (error) {
     return res.status(500).json({ error: "Internal Server Error" });
   }
@@ -233,4 +274,5 @@ module.exports = {
   deleteEducation,
   updateEducation,
   searchEducation,
+  getEducationRecommendations,
 };
