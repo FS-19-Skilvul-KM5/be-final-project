@@ -1,5 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 const {
   getEducationById,
   createEducation,
@@ -12,8 +17,8 @@ const {
 const validateToken = require("../middleware/validateTokenHandler");
 
 router.get("/", validateToken, getAllEducationByUser);
-router.post("/", validateToken, createEducation);
-router.put("/:id", validateToken, updateEducation);
+router.post("/", validateToken, upload.single("files"), createEducation);
+router.put("/:id", validateToken, upload.single("files"), updateEducation);
 
 router.get("/search", searchEducation);
 router.get("/recommendation", getAllEducation);

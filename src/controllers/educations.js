@@ -1,6 +1,8 @@
 const Education = require("../models/education");
 const User = require("../models/user");
 const { default: mongoose } = require("mongoose");
+const supabase = require("../../config/storageConnection");
+const { v4: uuidv4 } = require("uuid");
 
 const getAllEducationByUser = async (req, res) => {
   try {
@@ -28,7 +30,7 @@ const searchEducation = async (req, res) => {
   }
 };
 
-const getAllEducation = async (latest = true, res, req) => {
+const getAllEducation = async (req, res, latest = true) => {
   try {
     const educations = await Education.find()
       .sort({ publication_date: -1 })
@@ -63,10 +65,32 @@ const getEducationById = async (req, res) => {
 const createEducation = async (req, res) => {
   try {
     const { title, url } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "File tidak ditemukan" });
+    }
+    const image = req.file;
+
+    const { data, error } = await supabase.storage
+      .from("storage")
+      .upload(`image/${uuidv4()}-${image.originalname}`, image.buffer, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: image.mimetype,
+      });
+
+    if (error) return res.status(500).json({ error: "Internal server error!" });
+
+    const urlImage = supabase.storage.from("storage").getPublicUrl(data.path);
+
     const newEducation = new Education({
       author: req.user.id,
       title,
       video: url,
+      image: {
+        url: urlImage.data.publicUrl,
+        path: data.path,
+      },
     });
     const savedEducation = await newEducation.save();
 
@@ -96,6 +120,14 @@ const deleteEducation = async (req, res) => {
 
     if (!education) {
       return res.status(404).json({ error: "Education tidak ditemukan" });
+    }
+
+    const { error } = await supabase.storage
+      .from("storage")
+      .remove([`${education.image.path}`]);
+
+    if (error) {
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
     if (!education.author) {
@@ -132,6 +164,8 @@ const updateEducation = async (req, res) => {
   try {
     const educationId = req.params.id;
     const { title, url } = req.body;
+    const newImage = req.file;
+
     if (!mongoose.Types.ObjectId.isValid(educationId)) {
       return res.status(400).json({ error: "ID Education tidak valid" });
     }
@@ -144,6 +178,31 @@ const updateEducation = async (req, res) => {
 
     if (req.user.id != education.author.toString()) {
       return res.status(400).json({ error: "Anda bukan pemilik education" });
+    }
+
+    if (newImage) {
+      const { error } = await supabase.storage
+        .from("storage")
+        .remove([`${education.image.path}`]);
+
+      if (error) {
+        return res.status(500).json({ error: "Error deleting workshop file" });
+      }
+
+      const { data } = await supabase.storage
+        .from("storage")
+        .upload(`image/${uuidv4()}-${newImage.originalname}`, newImage.buffer, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: newImage.mimetype,
+        });
+
+      const urlImage = supabase.storage.from("storage").getPublicUrl(data.path);
+
+      education.image = {
+        url: urlImage.data.publicUrl,
+        path: data.path,
+      };
     }
 
     if (title !== undefined && title !== null && title !== "") {
