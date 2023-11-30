@@ -10,7 +10,7 @@ const getAllArticle = async (req, res) => {
   try {
     const article = await Article.find()
       .sort({ publication_date: -1 })
-      .limit(4);
+      .exec();
 
     res.status(200).json(article);
   } catch (error) {

@@ -34,7 +34,7 @@ const getAllEducation = async (req, res, latest = true) => {
   try {
     const educations = await Education.find()
       .sort({ publication_date: -1 })
-      .limit(4);
+      .exec();
 
     res.status(200).json(educations);
   } catch (error) {
