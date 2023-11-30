@@ -9,9 +9,11 @@ const signup = async (req, res) => {
       return res.status(400).json({ error: "All fields are mandatory!" });
     }
 
-    const userAvailable = await User.findOne({ email });
-    if (userAvailable) {
-      return res.status(400).json({ error: "User already registered!" });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: "Username or email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
