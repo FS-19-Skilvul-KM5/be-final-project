@@ -8,13 +8,52 @@ const { default: mongoose } = require("mongoose");
 
 const getAllArticle = async (req, res) => {
   try {
-    const article = await Article.find()
-      .sort({ publication_date: -1 })
-      .exec();
+    const { page = 1, limit = 12 } = req.query;
 
-    res.status(200).json(article);
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      sort: { publication_date: -1 },
+    };
+
+    const articles = await Article.paginate({}, options);
+
+    res.status(200).json(articles);
   } catch (error) {
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getRelatedArticles = async (articleId, limit = 8) => {
+  try {
+    const article = await Article.findById(articleId);
+    if (!article) {
+      throw new Error("Article not found");
+    }
+
+    const relatedArticles = await Article.find({
+      _id: { $ne: articleId },
+    })
+      .limit(limit)
+      .sort({ publication_date: -1 });
+
+    return relatedArticles;
+  } catch (error) {
+    console.error("Error fetching related articles:", error);
+    throw error;
+  }
+};
+
+const getArticleRecommendations = async (req, res) => {
+  try {
+    const { articleId } = req.params;
+
+    const relatedArticles = await getRelatedArticles(articleId);
+
+    res.status(200).json(relatedArticles);
+  } catch (error) {
+    console.error("Error generating article recommendations:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -232,4 +271,5 @@ module.exports = {
   updateArticle,
   getAllArticleByUser,
   searchArticle,
+  getArticleRecommendations,
 };
