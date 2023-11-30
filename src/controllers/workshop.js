@@ -243,51 +243,22 @@ const updateWorkshop = async (req, res) => {
       return res.status(404).json({ error: "Workshop not found" });
     }
 
-    existingWorkshop.title = title || existingWorkshop.title;
-    existingWorkshop.fasilitas = fasilitas || existingWorkshop.fasilitas;
-    existingWorkshop.materi = materi || existingWorkshop.materi;
-    existingWorkshop.tujuan = tujuan || existingWorkshop.tujuan;
-    existingWorkshop.moderator = moderator || existingWorkshop.moderator;
-    existingWorkshop.narasumber = narasumber || existingWorkshop.narasumber;
-    existingWorkshop.date = date || existingWorkshop.date;
-    existingWorkshop.startTime = startTime || existingWorkshop.startTime;
-    existingWorkshop.endTime = endTime || existingWorkshop.endTime;
-    existingWorkshop.timeZone = timeZone || existingWorkshop.timeZone;
-    existingWorkshop.location = location || existingWorkshop.location;
-    existingWorkshop.price = price || existingWorkshop.price;
+    updateWorkshopFields(existingWorkshop, {
+      title,
+      tujuan,
+      fasilitas,
+      moderator,
+      materi,
+      narasumber,
+      date,
+      startTime,
+      endTime,
+      timeZone,
+      location,
+      price,
+    });
 
-    const newPoster = req.file;
-
-    if (newPoster) {
-      const deleteWorkshopPoster = await supabase.storage
-        .from("storage")
-        .remove([`${existingWorkshop.poster.path}`]);
-
-      if (deleteWorkshopPoster.error) {
-        return res.status(500).json({ error: "Error deleting workshop file" });
-      }
-
-      const { data, error } = await supabase.storage
-        .from("storage")
-        .upload(
-          `image/${uuidv4()}-${newPoster.originalname}`,
-          newPoster.buffer,
-          {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: newPoster.mimetype,
-          }
-        );
-
-      const urlPoster = supabase.storage
-        .from("storage")
-        .getPublicUrl(data.path);
-
-      existingWorkshop.poster = {
-        url: urlPoster.data.publicUrl,
-        path: data.path,
-      };
-    }
+    await updateWorkshopPoster(existingWorkshop, req.file);
 
     const updatedWorkshop = await existingWorkshop.save();
 
@@ -297,6 +268,39 @@ const updateWorkshop = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const updateWorkshopFields = (workshop, fields) => {
+  for (const [key, value] of Object.entries(fields)) {
+    workshop[key] = value;
+  }
+};
+
+const updateWorkshopPoster = async (workshop, newPoster) => {
+  if (newPoster) {
+    const deleteWorkshopPoster = await supabase.storage
+      .from("storage")
+      .remove([`${workshop.poster.path}`]);
+
+    if (deleteWorkshopPoster.error) {
+      throw new Error("Error deleting workshop file");
+    }
+
+    const { data, error } = await supabase.storage
+      .from("storage")
+      .upload(`image/${uuidv4()}-${newPoster.originalname}`, newPoster.buffer, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: newPoster.mimetype,
+      });
+
+    const urlPoster = supabase.storage.from("storage").getPublicUrl(data.path);
+
+    workshop.poster = {
+      url: urlPoster.data.publicUrl,
+      path: data.path,
+    };
   }
 };
 
