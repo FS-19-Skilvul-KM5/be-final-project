@@ -16,7 +16,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const validateToken = require("../middleware/validateTokenHandler");
 
-router.get("/:articleId/recommendations", getArticleRecommendations);
+router.get("/recommendations", getArticleRecommendations);
 
 router.get("/", getAllArticle);
 

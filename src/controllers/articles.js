@@ -24,29 +24,23 @@ const getAllArticle = async (req, res) => {
   }
 };
 
-const getRelatedArticles = async (articleId, limit = 8) => {
+const getLatestArticles = async (limit = 8) => {
   try {
-    const article = await Article.findById(articleId);
-    if (!article) {
-      throw new Error("Article not found");
-    }
-
-    const relatedArticles = await Article.find({
-      _id: { $ne: articleId },
-    })
+    // Gantilah dengan logika atau method yang sesuai untuk mendapatkan artikel terbaru
+    const latestArticles = await Article.find({})
       .limit(limit)
       .sort({ publication_date: -1 });
 
-    return relatedArticles;
+    return latestArticles;
   } catch (error) {
-    console.error("Error fetching related articles:", error);
+    console.error("Error fetching latest articles:", error);
     throw error;
   }
 };
 
+
 const getArticleRecommendations = async (req, res) => {
   try {
-    const { articleId } = req.params;
 
     const relatedArticles = await getRelatedArticles(articleId);
 
