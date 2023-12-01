@@ -26,7 +26,6 @@ const getAllArticle = async (req, res) => {
 
 const getLatestArticles = async (limit = 8) => {
   try {
-    // Gantilah dengan logika atau method yang sesuai untuk mendapatkan artikel terbaru
     const latestArticles = await Article.find({})
       .limit(limit)
       .sort({ publication_date: -1 });
@@ -42,7 +41,7 @@ const getLatestArticles = async (limit = 8) => {
 const getArticleRecommendations = async (req, res) => {
   try {
 
-    const relatedArticles = await getRelatedArticles(articleId);
+    const relatedArticles = await getLatestArticles(articleId);
 
     res.status(200).json(relatedArticles);
   } catch (error) {
