@@ -41,7 +41,7 @@ const getLatestArticles = async (limit = 8) => {
 const getArticleRecommendations = async (req, res) => {
   try {
 
-    const relatedArticles = await getLatestArticles(articleId);
+    const relatedArticles = await getLatestArticles();
 
     res.status(200).json(relatedArticles);
   } catch (error) {
