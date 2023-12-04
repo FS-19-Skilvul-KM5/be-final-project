@@ -35,8 +35,18 @@ const WorkshopSchema = new mongoose.Schema({
   },
   peserta: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      idUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      phoneNumber: {
+        type: String,
+        required: true,
+      },
+      question: {
+        type: String,
+      },
     },
   ],
   narasumber: {

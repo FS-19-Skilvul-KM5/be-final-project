@@ -4,6 +4,29 @@ const supabase = require("../../config/storageConnection");
 const { default: mongoose } = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 
+const getAllWorkshopPeserta = async (req, res) => {
+  try {
+    const workshopId = req.params.id;
+
+    const workshop = await Workshop.findById(workshopId).populate({
+      path: "peserta",
+      populate: {
+        path: "idUser", // Adjust the path to match your schema
+        model: "User",
+      },
+    });
+
+    if (!workshop) {
+      return res.status(404).json({ error: "Workshop not found." });
+    }
+
+    res.status(200).json(workshop.peserta);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 const getAllWorkshopByUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("workshop");
@@ -67,29 +90,47 @@ const getWorkshopById = async (req, res) => {
 
 const createPeserta = async (req, res) => {
   try {
+    const { question, phoneNumber } = req.body;
     const workshopId = req.params.id;
     const userId = req.user.id;
+
     if (!userId) {
       return res.status(404).json({ error: "You are not signed in" });
     }
 
-    const workshop = await Workshop.findById(workshopId);
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid userId" });
+    }
 
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const workshop = await Workshop.findById(workshopId);
     if (!workshop) {
       return res.status(404).json({ error: "Workshop not found" });
     }
 
-    if (workshop.peserta.includes(userId)) {
+    if (workshop.peserta.some((p) => p.idUser.equals(userId))) {
       return res
         .status(400)
         .json({ error: "You are already registered for this workshop" });
     }
 
-    workshop.peserta.push(userId);
-    await workshop.save();
+    workshop.peserta.push({
+      idUser: userId,
+      phoneNumber: phoneNumber,
+      question: question,
+    });
 
-    res.status(200).json(workshop);
+    const updatedWorkshop = await workshop.save();
+
+    res.status(200).json(updatedWorkshop);
   } catch (error) {
+    console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -315,4 +356,5 @@ module.exports = {
   getAllWorkshop,
   createPeserta,
   updateWorkshop,
+  getAllWorkshopPeserta,
 };
