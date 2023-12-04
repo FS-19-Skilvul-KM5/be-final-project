@@ -14,13 +14,15 @@ const {
   getAllWorkshop,
   createPeserta,
   updateWorkshop,
+  getAllWorkshopPeserta,
 } = require("../controllers/workshop");
 const validateToken = require("../middleware/validateTokenHandler");
 
 router.get("/recommendation", getAllWorkshop);
 router.get("/search", searchWorkshop);
 router.get("/", getAllWorkshopByUser);
-router.post("/:id/peserta", validateToken, createPeserta);
+router.get("/:id/peserta", getAllWorkshopPeserta);
+router.post("/:id/peserta", validateToken, upload.none(), createPeserta);
 router.get("/:id", getWorkshopById);
 router.post("/", validateToken, upload.single("files"), createWorkshop);
 router.put("/:id", validateToken, upload.single("files"), updateWorkshop);
